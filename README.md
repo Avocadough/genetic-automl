@@ -1,88 +1,69 @@
-# 🧬 Meta-AutoML System <br> *(Solving CASH with Genetic Algorithms)*
+# Meta-AutoML with a genetic algorithm
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge&logo=python) 
-![Scikit-Learn](https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white) 
-![XGBoost](https://img.shields.io/badge/XGBoost-1296DB?style=for-the-badge&logo=xgboost&logoColor=white)
-![Custom GA](https://img.shields.io/badge/Custom_GA-Built_from_Scratch-success?style=for-the-badge)
+An experimental Python implementation of combined algorithm selection and hyperparameter search. It represents candidate scikit-learn pipelines as chromosomes, evaluates them with cross-validation, and uses genetic operators to evolve the population. Both classification and regression are supported.
 
-A powerful, custom-built **Automated Machine Learning (AutoML)** framework designed completely from scratch using Python. 
+This is a research and learning prototype, not a production AutoML service. It has no independent benchmark against established AutoML systems in this repository.
 
-The system utilizes a custom **Genetic Algorithm (GA)** to solve the *Combined Algorithm Selection and Hyperparameter optimization (CASH)* problem. It seamlessly hunts and evolves the perfect end-to-end `scikit-learn` Pipeline directly tailored to your dataset.
+## How it works
 
-## ✨ Key Features
+1. Sample candidate preprocessing, feature selection, estimator and hyperparameter settings.
+2. Score each candidate with stratified cross-validation and macro F1 for classification, or K-fold cross-validation and negative RMSE for regression.
+3. Select, cross and mutate candidates; carry the current best candidate into the next generation.
+4. Refit the selected pipeline on the supplied training data and expose `predict()` and `get_best_pipeline()`.
 
-- **End-to-End Pipeline Evolution**: Searches across Preprocessors (Standard/MinMax), Feature Extractors (PCA/SelectKBest), Models (Linear, SVM, Trees, MLP), and extensive hyperparameter domains.
-- **Classification & Regression Support**: Automatically targets `F1-macro` or `Negative-RMSE` depending on your task.
-- **100% Reproducibility**: Granular seed propagation guarantees that your experimental findings are mathematically reproducible.
-- **Fail-safe Timeout Handlers**: Protected against hanging pipelines natively via daemon threads (rogue SVMs/MLPs are punished, not frozen).
-- **Explicit Elitism**: The best traits are guaranteed mathematically never to degrade across GA generations.
-- **OOP Architecture**: Highly modular, clean codebase ideal for academics, researchers, and professional ML engineers.
+The search includes standard scalers, PCA or univariate feature selection, and several scikit-learn models. XGBoost is included when available.
 
----
-
-## ⚙️ Installation
-
-To use the `MetaAutoML` module locally, simply clone the repository and install the dependencies:
+## Quick start
 
 ```bash
-git clone https://github.com/your-username/Meta-AutoML.git
-cd Meta-AutoML
-pip install -r requirements.txt
+git clone https://github.com/Avocadough/AutoML-with-Metaheuristic-Optimization.git
+cd AutoML-with-Metaheuristic-Optimization
+python -m pip install -r requirements.txt
 ```
 
----
-
-## 🚀 Quick Start & Usage
-
-The top-level `MetaAutoML` class mirrors the standard scikit-learn API, abstracting away all GA complexities behind standard `.fit()` and `.predict()` methods.
+The example below checks the API with a small Iris split. Zero evolved generations means only the initial candidates are evaluated; increase the population and generations for an actual search.
 
 ```python
-from sklearn.datasets import load_breast_cancer
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
 from meta_automl import MetaAutoML
 
-# 1. Load Data
-X, y = load_breast_cancer(return_X_y=True)
-
-# 2. Initialize the GA Optimizer
-automl = MetaAutoML(
-    task_type="classification", # Or "regression"
-    pop_size=20,                # Chromosomes per generation
-    n_generations=15,           # Evolutionary cycles
-    cv_folds=5,                 # K-Fold Evaluation
-    timeout_seconds=30,         # Guard against infinite models
-    random_state=42             # Total Reproducibility
+X, y = load_iris(return_X_y=True)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, stratify=y, random_state=42
 )
 
-# 3. Fit (Evolve) the Pipeline
-automl.fit(X, y, verbose=True)
-
-# 4. View visually engaging Summary
-automl.summary()
-
-# 5. Predict or extract pipeline
-predictions = automl.predict(X)
-best_model = automl.get_best_pipeline() 
+search = MetaAutoML(
+    task_type="classification",
+    pop_size=2,
+    n_generations=0,
+    cv_folds=2,
+    timeout_seconds=10,
+    random_state=42,
+)
+search.fit(X_train, y_train, verbose=False)
+predictions = search.predict(X_test)
+print("Predictions:", len(predictions))
 ```
 
----
+To run the smoke checks, install `pytest` and run `python -m pytest -q`. `main.py` contains larger classification and regression examples and can take substantially longer.
 
-## 📂 Repository Structure
+## Structure
 
-```text
-AutoML_Track/
-├── meta_automl/
-│   ├── __init__.py           # Package exports
-│   ├── search_space.py       # Defines Models, Scaling, & HPs
-│   ├── chromosome.py         # Pipeline Encoding
-│   ├── fitness.py            # Async K-Fold CV Evaluation
-│   ├── genetic_operators.py  # Tournament, Crossover, Mutation
-│   ├── ga_engine.py          # Master Evolutionary Loop
-│   └── meta_automl.py        # Top-level Human API
-├── main.py                   # Executable Demo (Breast Cancer/Diabetes)
-├── requirements.txt
-├── README.md                 # Project Overview
-└── project_review_for_LLM.md # Deep context file for Agentic AI
-```
+| Path | Purpose |
+| --- | --- |
+| [`meta_automl/search_space.py`](meta_automl/search_space.py) | Candidate models and hyperparameter ranges. |
+| [`meta_automl/chromosome.py`](meta_automl/chromosome.py) | Pipeline representation. |
+| [`meta_automl/fitness.py`](meta_automl/fitness.py) | Pipeline construction and cross-validation fitness. |
+| [`meta_automl/genetic_operators.py`](meta_automl/genetic_operators.py) | Selection, crossover and mutation. |
+| [`meta_automl/ga_engine.py`](meta_automl/ga_engine.py) | Population and evolution loop. |
+| [`meta_automl/meta_automl.py`](meta_automl/meta_automl.py) | Fit/predict interface. |
+| [`tests/`](tests/) | Small API smoke checks. |
 
----
-*Developed as a robust Metaheuristic Optimization solution.* 🧬📈
+## Limits
+
+- The search seeds several random operations, but identical results across dependency versions, hardware or timed-out runs are not guaranteed.
+- The timeout stops **waiting** for a cross-validation thread; it does not terminate that thread. Repeated timeouts can continue consuming resources. It is not a hard execution or memory limit.
+- For `n_generations > 0`, tournament selection requires at least 3 candidates. At exactly 3, every tournament contains the whole population and selects the same best candidate, limiting crossover diversity. Use at least 4 for exploration; repeated parent selection can still occur. The API does not currently validate all configuration errors.
+- Cross-validation scores guide selection and are not an independent test score. Reserve a holdout suited to your data; random K-fold is unsuitable for many temporal or grouped datasets.
+- `predict_proba()` depends on whether the selected estimator supports it. Regressors do not provide class probabilities. No model-quality or runtime guarantee is made.
