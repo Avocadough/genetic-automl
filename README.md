@@ -1,4 +1,18 @@
-# Meta-AutoML with a genetic algorithm
+<div align="center">
+
+# Genetic AutoML
+
+**Evolving machine-learning pipelines with a genetic algorithm.**
+
+![Python](https://img.shields.io/badge/Python-ML%20Pipelines-3776AB?logo=python&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-Model%20Search-F7931E?logo=scikitlearn&logoColor=white)
+![Status](https://img.shields.io/badge/Status-Research%20Prototype-5A6472)
+
+[Overview](#overview) · [How it works](#how-it-works) · [Quick start](#quick-start) · [Limitations](#limits)
+
+</div>
+
+## Overview
 
 An experimental Python implementation of combined algorithm selection and hyperparameter search. It represents candidate scikit-learn pipelines as chromosomes, evaluates them with cross-validation, and uses genetic operators to evolve the population. Both classification and regression are supported.
 
@@ -16,8 +30,8 @@ The search includes standard scalers, PCA or univariate feature selection, and s
 ## Quick start
 
 ```bash
-git clone https://github.com/Avocadough/AutoML-with-Metaheuristic-Optimization.git
-cd AutoML-with-Metaheuristic-Optimization
+git clone https://github.com/Avocadough/genetic-automl.git
+cd genetic-automl
 python -m pip install -r requirements.txt
 ```
 
